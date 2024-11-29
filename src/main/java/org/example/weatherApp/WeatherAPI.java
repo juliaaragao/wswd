@@ -24,5 +24,21 @@ public class WeatherAPI {
                            .entity("{\"error\": \"" + e.getMessage() + "\"}").build();
         }
     }
+
+    @GET
+    @Path("/{stationId}/{date}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getWeatherByStationAndDate(@PathParam("stationId") String stationId,
+                                               @PathParam("date") String date) {
+        try {
+            String result = sparqlService.queryWeatherDataByStationAndDate(stationId, date);
+            return Response.ok(result).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity("{\"error\": \"" + e.getMessage() + "\"}").build();
+        }
+    }
+
 }
 
