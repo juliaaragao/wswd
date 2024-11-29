@@ -12,11 +12,25 @@ public class WeatherAPI {
     }
 
     @GET
+    @Path("/stations")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getStation() {
+        try {
+            String result = sparqlService.queryStation();
+            return Response.ok(result).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity("{\"error\": \"" + e.getMessage() + "\"}").build();
+        }
+    }
+
+    @GET
     @Path("/{stationId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getWeather(@PathParam("stationId") String stationId) {
         try {
-            String result = sparqlService.queryWeatherData(stationId);
+            String result = sparqlService.queryDateOfStation(stationId);
             return Response.ok(result).build();
         } catch (Exception e) {
             e.printStackTrace();
