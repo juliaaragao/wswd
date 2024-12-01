@@ -67,14 +67,17 @@ app.layout = dbc.Container([
 )
 def update_location_options(_):
     try:
-        response = requests.get("http://localhost:8080/api/weather/stations")  # 假设后端有此端点
+        response = requests.get("http://localhost:8080/api/weather/stations")
+        print("Station API response:", response.status_code, response.json())  # 调试用
         if response.status_code == 200:
-            stations = response.json()
-            return [{"label": station, "value": station} for station in stations]
+            stations = response.json()  # 格式为 {"ABBEVILLE": "07005", "LILLE-LESQUIN": "07015"}
+            # 转换为 Dropdown 需要的格式
+            return [{"label": name, "value": code} for name, code in stations.items()]
         return []
     except Exception as e:
         print(f"Error fetching stations: {e}")
         return []
+
 
 
 # 动态加载日期列表
@@ -89,7 +92,14 @@ def update_date_options(selected_location):
         response = requests.get(f"http://localhost:8080/api/weather/{selected_location}")  # 假设后端支持
         if response.status_code == 200:
             dates = response.json()
-            return [{"label": date, "value": date} for date in dates]
+            formatted_dates = [
+                {
+                    "label": datetime.strptime(date["date"], "%Y%m%d%H%M%S").strftime("%Y-%m-%d %H:%M:%S"),  # 可读格式
+                    "value": date["date"]  # 原始格式作为 value
+                }
+                for date in dates
+            ]
+            return formatted_dates
         return []
     except Exception as e:
         print(f"Error fetching dates: {e}")
