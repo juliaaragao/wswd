@@ -1,107 +1,136 @@
-import dash
-from dash import dcc, html, Input, Output
-import dash_bootstrap_components as dbc
+from dash import Dash, html, dcc, Input, Output
+import requests
 
-# Dados fictícios para os locais e suas informações meteorológicas
-locations = {
-    "Technopole, Finistère": [
-        {"date": "11/11/23", "temperature": "19°", "humidity": "72%", "wind_speed": "31 km/h"},
-        {"date": "12/12/23", "temperature": "12°", "humidity": "70%", "wind_speed": "28 km/h"},
-        {"date": "12/01/24", "temperature": "10°", "humidity": "68%", "wind_speed": "25 km/h"},
-    ],
-    "Paris, Île-de-France": [
-        {"date": "11/11/23", "temperature": "15°", "humidity": "65%", "wind_speed": "20 km/h"},
-        {"date": "12/12/23", "temperature": "10°", "humidity": "60%", "wind_speed": "18 km/h"},
-    ],
-    "Lyon, Auvergne-Rhône-Alpes": [
-        {"date": "11/11/23", "temperature": "17°", "humidity": "60%", "wind_speed": "25 km/h"},
-        {"date": "12/12/23", "temperature": "16°", "humidity": "58%", "wind_speed": "22 km/h"},
-    ],
-    "Marseille, Provence-Alpes-Côte d'Azur": [
-        {"date": "11/11/23", "temperature": "20°", "humidity": "70%", "wind_speed": "30 km/h"},
-        {"date": "12/12/23", "temperature": "19°", "humidity": "68%", "wind_speed": "28 km/h"},
-    ],
-}
+# app
+app = Dash(__name__)
 
-# Inicializar o app Dash com um tema do Bootstrap
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.COSMO])
+# URL API
+API_BASE_URL = "http://localhost:8080/api/weather"
 
-# Layout do dashboard
-app.layout = dbc.Container([
-    html.H1("Météo Dashboard", className="text-center my-4"),
+# dashboard
+app.layout = html.Div(
+    style={
+        "fontFamily": "Arial, sans-serif",
+        "width": "70%",
+        "margin": "auto",
+        "backgroundColor": "#f8f9fa",
+        "padding": "20px",
+        "borderRadius": "10px",
+        "boxShadow": "0px 4px 10px rgba(0, 0, 0, 0.1)"
+    },
+    children=[
+        html.H1("Météo", style={"textAlign": "center", "color": "#343a40"}),
+        html.Div(
+            [
+                html.Label("Station", style={"fontWeight": "bold", "color": "#495057"}),
+                dcc.Dropdown(id="station-dropdown", placeholder="Pick a station", style={"marginBottom": "20px"}),
+            ]
+        ),
+        html.Div(
+            [
+                html.Label("Date", style={"fontWeight": "bold", "color": "#495057"}),
+                dcc.Dropdown(id="date-dropdown", placeholder="Pick a date", style={"marginBottom": "20px"}),
+            ]
+        ),
+        html.Div(
+            id="weather-info",
+            style={
+                "display": "grid",
+                "gridTemplateColumns": "repeat(3, 1fr)",
+                "gap": "10px",
+                "marginTop": "20px",
+                "backgroundColor": "#ffffff",
+                "borderRadius": "10px",
+                "padding": "15px",
+                "boxShadow": "0px 4px 10px rgba(0, 0, 0, 0.1)"
+            }
+        ),
+    ]
+)
+# Callback stations
+@app.callback(Output("station-dropdown", "options"), Input("station-dropdown", "id"))
+def load_stations(_):
+    try:
+        response = requests.get(f"{API_BASE_URL}/stations")
+        if response.status_code == 200:
+            stations = response.json()
+            return [{"label": station["stationName"], "value": station["station"]} for station in stations]
+    except Exception as e:
+        print(f"Error loading stations: {e}")
+    return []
 
-    dbc.Row([
-        # Dropdown para selecionar a localização
-        dbc.Col([
-            html.Label("Selecione a Localização:"),
-            dcc.Dropdown(
-                id="location-dropdown",
-                options=[{"label": loc, "value": loc} for loc in locations.keys()],
-                value="Technopole, Finistère",
-                clearable=False,
-                style={"width": "100%"}
-            ),
-        ], width=6),
-
-        # Dropdown para selecionar a data
-        dbc.Col([
-            html.Label("Selecione a Data:"),
-            dcc.Dropdown(
-                id="date-dropdown",
-                clearable=False,
-                style={"width": "100%"}
-            ),
-        ], width=6),
-    ], className="mb-4"),
-
-    # Div para exibir as informações meteorológicas
-    dbc.Row([
-        dbc.Col([
-            dbc.Card(
-                dbc.CardBody([
-                    html.H3(id="weather-title", className="card-title text-center"),
-                    html.P(id="weather-temperature", className="card-text text-center"),
-                    html.P(id="weather-humidity", className="card-text text-center"),
-                    html.P(id="weather-wind", className="card-text text-center"),
-                ]),
-                className="shadow-sm"
-            )
-        ], width=12)
-    ])
-], fluid=True)
-
-
-# Callback para atualizar as opções de data com base no local selecionado
+# Callback dates - stations
 @app.callback(
     Output("date-dropdown", "options"),
-    Input("location-dropdown", "value")
+    Output("date-dropdown", "value"),
+    Input("station-dropdown", "value"),
 )
-def update_date_options(selected_location):
-    dates = locations[selected_location]
-    return [{"label": entry["date"], "value": entry["date"]} for entry in dates]
+def load_dates(station_id):
+    if station_id:
+        try:
+            response = requests.get(f"{API_BASE_URL}/{station_id}")
+            if response.status_code == 200:
+                dates = response.json()
+                if dates:
+                    return [{"label": date_obj["date"], "value": date_obj["date"]} for date_obj in dates], dates[0]["date"]
+        except Exception as e:
+            print(f"rror loading dates: {e}")
+    return [], None
 
-
-# Callback para atualizar as informações meteorológicas com base na localização e data selecionadas
+# Callback data meteo
 @app.callback(
-    [Output("weather-title", "children"),
-     Output("weather-temperature", "children"),
-     Output("weather-humidity", "children"),
-     Output("weather-wind", "children")],
-    [Input("location-dropdown", "value"),
-     Input("date-dropdown", "value")]
+    Output("weather-info", "children"),
+    Input("station-dropdown", "value"),
+    Input("date-dropdown", "value"),
 )
-def update_weather_info(selected_location, selected_date):
-    if not selected_date:
-        return "Por favor, selecione uma data.", "", "", ""
+def update_weather_info(station_id, date):
+    if station_id and date:
+        try:
+            response = requests.get(f"{API_BASE_URL}/{station_id}/{date}")
+            if response.status_code == 200:
+                weather_data = response.json()
+                return [
+                    html.Div(style={"gridColumn": "span 3"}, children=[
+                        html.H2(f"{weather_data.get('temperature', 'N/A')}°", style={"fontSize": "48px", "color": "#343a40", "textAlign": "center"}),
+                        html.P("T. ressentie", style={"textAlign": "center", "color": "#6c757d"})
+                    ]),
+                    html.Div(children=[
+                        html.P("Max / Min", style={"fontWeight": "bold", "color": "#495057"}),
+                        html.P(f"{weather_data.get('max_temperature', 'N/A')}° / {weather_data.get('min_temperature', 'N/A')}°", style={"color": "#6c757d"})
+                    ]),
+                    html.Div(children=[
+                        html.P("Humidité", style={"fontWeight": "bold", "color": "#495057"}),
+                        html.P(f"{weather_data.get('humidity', 'N/A')}%", style={"color": "#6c757d"})
+                    ]),
+                    html.Div(children=[
+                        html.P("Pression", style={"fontWeight": "bold", "color": "#495057"}),
+                        html.P(f"{weather_data.get('pression_ocean', 'N/A')} mb", style={"color": "#6c757d"})
+                    ]),
+                    html.Div(children=[
+                        html.P("Vent", style={"fontWeight": "bold", "color": "#495057"}),
+                        html.P(f"{weather_data.get('wind_speed', 'N/A')} km/h", style={"color": "#6c757d"})
+                    ]),
+                    html.Div(children=[
+                        html.P("Visibilité", style={"fontWeight": "bold", "color": "#495057"}),
+                        html.P(f"{weather_data.get('horizontal_visibility', 'N/A')} km", style={"color": "#6c757d"})
+                    ]),
+                    html.Div(children=[
+                        html.P("Point de rosée", style={"fontWeight": "bold", "color": "#495057"}),
+                        html.P(f"{weather_data.get('dew_point', 'N/A')}°", style={"color": "#6c757d"})
+                    ]),
+                    html.Div(children=[
+                        html.P("Indice UV", style={"fontWeight": "bold", "color": "#495057"}),
+                        html.P(f"{weather_data.get('uv_index', 'N/A')}", style={"color": "#6c757d"})
+                    ]),
+                    html.Div(children=[
+                        html.P("Phase de lune", style={"fontWeight": "bold", "color": "#495057"}),
+                        html.P(f"{weather_data.get('moon_phase', 'N/A')}", style={"color": "#6c757d"})
+                    ]),
+                ]
+        except Exception as e:
+            print(f"Error querying the API: {e}")
+    return [html.P("Data not available", style={"textAlign": "center", "color": "#6c757d"})]
 
-    weather_data = next(item for item in locations[selected_location] if item["date"] == selected_date)
-    title = f"Météo pour {selected_location} ({selected_date})"
-    temperature = f"Temperatura: {weather_data['temperature']}"
-    humidity = f"Umidade: {weather_data['humidity']}"
-    wind = f"Velocidade do Vento: {weather_data['wind_speed']}"
-    return title, temperature, humidity, wind
-
-
-# Executar o servidor
+# main
 if __name__ == "__main__":
     app.run_server(debug=True)
