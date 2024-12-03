@@ -59,6 +59,16 @@ def load_stations(_):
         print(f"Error loading stations: {e}")
     return []
 
+## Format Data
+def format_date(raw_date):
+    year = raw_date[:4]
+    month = raw_date[4:6]
+    day = raw_date[6:8]
+    hour = raw_date[8:10]
+    minute = raw_date[10:12]
+    second = raw_date[12:14]
+    return f"{year}-{month}-{day} | {hour}h{minute}min{second}s"
+
 # Callback dates - stations
 @app.callback(
     Output("date-dropdown", "options"),
@@ -72,10 +82,12 @@ def load_dates(station_id):
             if response.status_code == 200:
                 dates = response.json()
                 if dates:
-                    return [{"label": date_obj["date"], "value": date_obj["date"]} for date_obj in dates], dates[0]["date"]
+                    formatted_dates = [{"label": format_date(date_obj["date"]), "value": date_obj["date"]} for date_obj in dates]
+                    return formatted_dates, dates[0]["date"]
         except Exception as e:
-            print(f"rror loading dates: {e}")
+            print(f"Error loading dates: {e}")
     return [], None
+
 
 # Callback data meteo
 @app.callback(
@@ -90,42 +102,38 @@ def update_weather_info(station_id, date):
             if response.status_code == 200:
                 weather_data = response.json()
                 return [
-                    html.Div(style={"gridColumn": "span 3"}, children=[
-                        html.H2(f"{weather_data.get('temperature', 'N/A')}°", style={"fontSize": "48px", "color": "#343a40", "textAlign": "center"}),
-                        html.P("T. ressentie", style={"textAlign": "center", "color": "#6c757d"})
-                    ]),
-                    html.Div(children=[
-                        html.P("Max / Min", style={"fontWeight": "bold", "color": "#495057"}),
-                        html.P(f"{weather_data.get('max_temperature', 'N/A')}° / {weather_data.get('min_temperature', 'N/A')}°", style={"color": "#6c757d"})
-                    ]),
+                    html.H2( f"{float(weather_data.get('temperature', 0)) - 273.15:.2f}°C" if weather_data.get('temperature') else "N/A", style={"fontSize": "48px", "color": "#343a40", "textAlign": "center"}),
+                    # html.Div(children=[
+                    #     html.P("Max / Min", style={"fontWeight": "bold", "color": "#495057"}),
+                    #     html.P(f"{weather_data.get('max_temperature', 'N/A')}° / {weather_data.get('min_temperature', 'N/A')}°", style={"color": "#6c757d"})
+                    # ]),
                     html.Div(children=[
                         html.P("Humidité", style={"fontWeight": "bold", "color": "#495057"}),
                         html.P(f"{weather_data.get('humidity', 'N/A')}%", style={"color": "#6c757d"})
                     ]),
                     html.Div(children=[
                         html.P("Pression", style={"fontWeight": "bold", "color": "#495057"}),
-                        html.P(f"{weather_data.get('pression_ocean', 'N/A')} mb", style={"color": "#6c757d"})
+                        html.P(f"{weather_data.get('pression_ocean', 'N/A')} Pa", style={"color": "#6c757d"})
                     ]),
                     html.Div(children=[
-                        html.P("Vent", style={"fontWeight": "bold", "color": "#495057"}),
-                        html.P(f"{weather_data.get('wind_speed', 'N/A')} km/h", style={"color": "#6c757d"})
+                        html.P("Wind Speed", style={"fontWeight": "bold", "color": "#495057"}),
+                        html.P(f"{float(weather_data.get('wind_speed', 'N/A')):.2f} km/h", style={"color": "#6c757d"})
                     ]),
+                    html.Div(children=[
+                    html.P("Wind Diretion", style={"fontWeight": "bold", "color": "#495057"}),
+                    html.P(f"{weather_data.get('wind_direction', 'N/A')}", style={"color": "#6c757d"})
+                    ]),
+
                     html.Div(children=[
                         html.P("Visibilité", style={"fontWeight": "bold", "color": "#495057"}),
-                        html.P(f"{weather_data.get('horizontal_visibility', 'N/A')} km", style={"color": "#6c757d"})
+                        html.P(f"{weather_data.get('horizontal_visibility', 'N/A')} m", style={"color": "#6c757d"})
                     ]),
-                    html.Div(children=[
-                        html.P("Point de rosée", style={"fontWeight": "bold", "color": "#495057"}),
-                        html.P(f"{weather_data.get('dew_point', 'N/A')}°", style={"color": "#6c757d"})
+                    html.Div(children=[ html.P("Point de rosée", style={"fontWeight": "bold", "color": "#495057"}),
+                    html.P(f"{float(weather_data.get('dew_point', 0)) - 273.15:.2f}°C" if weather_data.get('dew_point') else "N/A", style={"color": "#6c757d"})
                     ]),
-                    html.Div(children=[
-                        html.P("Indice UV", style={"fontWeight": "bold", "color": "#495057"}),
-                        html.P(f"{weather_data.get('uv_index', 'N/A')}", style={"color": "#6c757d"})
-                    ]),
-                    html.Div(children=[
-                        html.P("Phase de lune", style={"fontWeight": "bold", "color": "#495057"}),
-                        html.P(f"{weather_data.get('moon_phase', 'N/A')}", style={"color": "#6c757d"})
-                    ]),
+                    html.Div(children=[ html.P("Cloudiness", style={"fontWeight": "bold", "color": "#495057"}),
+                    html.P(f"{(weather_data.get('couldiness', "N/A"))}", style={"color": "#6c757d"})
+                    ]), 
                 ]
         except Exception as e:
             print(f"Error querying the API: {e}")

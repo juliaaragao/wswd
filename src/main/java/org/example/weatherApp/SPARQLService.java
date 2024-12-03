@@ -242,7 +242,7 @@ public class SPARQLService {
             json.addProperty("dew_point", handleMqValue(solution, "dew_point", MISSING_VALUE));
             json.addProperty("humidity", handleMqValue(solution, "humidity", MISSING_VALUE));
             json.addProperty("horizontal_visibility", handleMqValue(solution, "horizontal_visibility", MISSING_VALUE));
-            json.addProperty("cloudiness", handleMqValue(solution, "couldiness", MISSING_VALUE));
+            json.addProperty("couldiness", handleMqValue(solution, "couldiness", MISSING_VALUE));
             json.addProperty("min_temperature", handleMqValue(solution, "min_temperature", MISSING_VALUE));
             json.addProperty("max_temperature", handleMqValue(solution, "max_temperature", MISSING_VALUE));
 
