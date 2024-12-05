@@ -135,7 +135,7 @@ public class SPARQLService {
                 String stationId = solution.getLiteral("station").getString();
                 json.addProperty("station", stationId);
                 json.addProperty("stationName", getStationName(stationId)); // Add station name
-                jsonArray.add(json); // 将单条记录添加到数组中
+                jsonArray.add(json); // join this record to jsonArray
             }
 
             if (jsonArray.size() == 0) {
@@ -237,7 +237,12 @@ public class SPARQLService {
             json.addProperty("date", date);
             json.addProperty("temperature", handleMqValue(solution, "temperature", MISSING_VALUE));
             json.addProperty("pression_ocean", handleMqValue(solution, "pression_ocean", MISSING_VALUE));
-            json.addProperty("wind_direction", handleMqValue(solution, "wind_direction", MISSING_VALUE));
+
+            // get original wind direction
+            String rawWindDirection = handleMqValue(solution, "wind_direction", MISSING_VALUE);
+            // using converted wind direction
+            json.addProperty("wind_direction", convertWindDirection(rawWindDirection));
+
             json.addProperty("wind_speed", handleMqValue(solution, "wind_speed", MISSING_VALUE));
             json.addProperty("dew_point", handleMqValue(solution, "dew_point", MISSING_VALUE));
             json.addProperty("humidity", handleMqValue(solution, "humidity", MISSING_VALUE));
@@ -251,6 +256,41 @@ public class SPARQLService {
             dataset.end();
         }
     }
+
+    private String convertWindDirection(String windDirectionValue) {
+        try {
+            // 检查输入是否为 "mq" 或空值
+            if (windDirectionValue == null || "mq".equals(windDirectionValue)) {
+                return "N/A";
+            }
+
+            // 将字符串风向转换为整数
+            int angle = Integer.parseInt(windDirectionValue);
+
+            // convert wind direction according to angle
+            if (angle >= 348.75 || angle < 11.25) return "Vent du Nord (N)";
+            else if (angle >= 11.25 && angle < 33.75) return "Vent du Nord-Nord-Est (NNE)";
+            else if (angle >= 33.75 && angle < 56.25) return "Vent du Nord-Est (NE)";
+            else if (angle >= 56.25 && angle < 78.75) return "Vent d'Est-Nord-Est (ENE)";
+            else if (angle >= 78.75 && angle < 101.25) return "Vent d'Est (E)";
+            else if (angle >= 101.25 && angle < 123.75) return "Vent d'Est-Sud-Est (ESE)";
+            else if (angle >= 123.75 && angle < 146.25) return "Vent du Sud-Est (SE)";
+            else if (angle >= 146.25 && angle < 168.75) return "Vent du Sud-Sud-Est (SSE)";
+            else if (angle >= 168.75 && angle < 191.25) return "Vent du Sud (S)";
+            else if (angle >= 191.25 && angle < 213.75) return "Vent du Sud-Sud-Ouest (SSW)";
+            else if (angle >= 213.75 && angle < 236.25) return "Vent du Sud-Ouest (SW)";
+            else if (angle >= 236.25 && angle < 258.75) return "Vent d'Ouest-Sud-Ouest (WSW)";
+            else if (angle >= 258.75 && angle < 281.25) return "Vent d'Ouest (W)";
+            else if (angle >= 281.25 && angle < 303.75) return "Vent d'Ouest-Nord-Ouest (WNW)";
+            else if (angle >= 303.75 && angle < 326.25) return "Vent du Nord-Ouest (NW)";
+            else if (angle >= 326.25 && angle < 348.75) return "Vent du Nord-Nord-Ouest (NNW)";
+            else return "Direction Inconnu";
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            return "N/A";
+        }
+    }
+
 
 
 

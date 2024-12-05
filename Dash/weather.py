@@ -132,7 +132,7 @@ def update_weather_info(station_id, date):
                     html.P(f"{float(weather_data.get('dew_point', 0)) - 273.15:.2f}°C" if weather_data.get('dew_point') else "N/A", style={"color": "#6c757d"})
                     ]),
                     html.Div(children=[ html.P("Cloudiness", style={"fontWeight": "bold", "color": "#495057"}),
-                    html.P(f"{(weather_data.get('couldiness', "N/A"))}", style={"color": "#6c757d"})
+                    html.P(f"{(weather_data.get('couldiness', 'N/A'))} %", style={"color": "#6c757d"})
                     ]), 
                 ]
         except Exception as e:
