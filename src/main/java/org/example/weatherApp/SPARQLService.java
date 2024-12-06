@@ -188,7 +188,7 @@ public class SPARQLService {
                 JsonObject json = new JsonObject();
                 json.addProperty("date", solution.getLiteral("date").getString());
 
-                jsonArray.add(json); // 将单条记录添加到数组中
+                jsonArray.add(json); // join this record to jsonArray
             }
 
             if (jsonArray.size() == 0) {
@@ -259,12 +259,12 @@ public class SPARQLService {
 
     private String convertWindDirection(String windDirectionValue) {
         try {
-            // 检查输入是否为 "mq" 或空值
+            // Examine the value is null or "mq"
             if (windDirectionValue == null || "mq".equals(windDirectionValue)) {
                 return "N/A";
             }
 
-            // 将字符串风向转换为整数
+            // convert String to Integer
             int angle = Integer.parseInt(windDirectionValue);
 
             // convert wind direction according to angle

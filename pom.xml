@@ -33,7 +33,7 @@
             <groupId>org.apache.jena</groupId>
             <artifactId>apache-jena-libs</artifactId>
             <type>pom</type>
-            <version>5.2.0</version> <!-- 确保版本是最新的 -->
+            <version>5.2.0</version>
         </dependency>
 
         <dependency>

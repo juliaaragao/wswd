@@ -24,7 +24,7 @@ public class RDFDataLoader {
             System.out.println("Loaded model size: " + model.size());
             //model.write(System.out, "TURTLE"); // output .ttl to terminal
 
-            // Print 07005's infos for examining
+            // Print 07005 observation for examining
             model = dataset.getDefaultModel();
             StmtIterator iter = model.listStatements(null, model.createProperty("http://example.org/weather#station"), "07005");
             while (iter.hasNext()) {

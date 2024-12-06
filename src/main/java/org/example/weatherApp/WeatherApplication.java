@@ -10,7 +10,7 @@ import java.net.URI;
 public class WeatherApplication {
     public static void main(String[] args) {
         RDFDataLoader loader = new RDFDataLoader();
-        loader.loadData("D:\\imt-a\\TAF IHM\\WSWD\\Weather\\result-triples (new).ttl"); //your .ttl file address
+        loader.loadData("D:\\imt-a\\TAF IHM\\WSWD\\Weather\\result-triples-new.ttl"); //your .ttl file address
 
         SPARQLService sparqlService = new SPARQLService(loader.getDataset());
 
